@@ -8,6 +8,9 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
+import org.countWords.utils._Map;
+import org.countWords.utils._Reduce;
+
 public class Main {
     public static void main(String[] args) throws Exception {
         Configuration conf = new Configuration();
@@ -15,7 +18,7 @@ public class Main {
         conf.set("fs.defaultFS", "file:///");
 
         if (args.length != 2) {
-            System.err.println("Uso: org.countWords.Main <caminho_entrada/bible.txt> <diretorio_saida>");
+            System.err.println("[400] Uso: org.countWords.Main <caminho_entrada/bible.txt> <diretorio_saida>");
             System.exit(2);
         }
 

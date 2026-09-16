@@ -1,4 +1,4 @@
-package org.countWords;
+package org.countWords.utils;
 
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
