@@ -18,15 +18,15 @@ export PATH="$HADOOP_HOME/bin:$HADOOP_HOME/sbin:$JAVA_HOME/bin:$PATH"
 ### BigData-Mavem
 
 ```bash
-cd BigData-Mavem
+cd BigData-Mavem/
 mvn clean package
 mvn package
 rm -rf output-wordcount
-hadoop jar BigData-Mavem-1.0-SNAPSHOT.jar \
-    org.countWord.Main \
+hadoop jar target/BigData-Mavem-1.0-SNAPSHOT.jar \
+    org.countWords.Main \
     src/main/resources/input/bible.txt \
-    output-wordcount
-cat output-wordcount/part-r-00000
+    src/main/resources/output
+cat src/main/resources/output/part-r-00000
 cd ..
 ```
 
@@ -39,8 +39,8 @@ mvn package
 rm -rf output-temperatura
 hadoop jar target/temperatura-media-1.0-SNAPSHOT.jar \
     org.forestFire.Main \
-    data/input/forestfireinput.csv \
-    output-temperatura
-cat output-temperatura/part-r-00000
+    src/main/resources/input/forestfireinput.csv \
+    src/main/resources/output
+cat src/main/resources/output/part-r-00000
 cd ..
 ```

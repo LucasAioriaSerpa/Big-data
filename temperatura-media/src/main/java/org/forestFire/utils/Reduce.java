@@ -1,4 +1,4 @@
-package org.forestFire;
+package org.forestFire.utils;
 
 import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.Text;
