@@ -1,7 +1,7 @@
 cd temperatura-media/
 mvn clean package
 mvn package
-rm -rf output-temperatura
+rm -rf src/main/resources/output
 hadoop jar target/temperatura-media-1.0-SNAPSHOT.jar \
     org.forestFire.Main \
     src/main/resources/input/forestfireinput.csv \

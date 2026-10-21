@@ -8,8 +8,8 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
-import org.forestFire.utils.Combine;
 import org.forestFire.utils.Map;
+import org.forestFire.utils.Combine;
 import org.forestFire.utils.Reduce;
 
 public class Main {
@@ -20,11 +20,11 @@ public class Main {
         conf.set("fs.defaultFS", "file:///");
 
         if (args.length != 2) {
-            System.err.println("Uso: Main <caminho/forestfireinput.csv> <diretorio_saida>");
+            System.err.println("Uso: Main <caminho_entrada> <diretorio_saida>");
             System.exit(2);
         }
 
-        Job job = Job.getInstance(conf, "Analise de Temperatura Media");
+        Job job = Job.getInstance(conf, "Analise de Temperatura Completa");
         job.setJarByClass(Main.class);
 
         job.setMapperClass(Map.class);
@@ -33,9 +33,8 @@ public class Main {
 
         job.setMapOutputKeyClass(Text.class);
         job.setMapOutputValueClass(Text.class);
-
         job.setOutputKeyClass(Text.class);
-        job.setOutputValueClass(DoubleWritable.class);
+        job.setOutputValueClass(Text.class);
 
         FileInputFormat.addInputPath(job, new Path(args[0]));
         FileOutputFormat.setOutputPath(job, new Path(args[1]));
