@@ -21,9 +21,7 @@ final class CorrelationStats {
     }
 
     void merge(CorrelationStats other) {
-        if (other.count == 0) {
-            return;
-        }
+        if (other.count == 0) { return; }
         if (count == 0) {
             count = other.count;
             meanX = other.meanX;

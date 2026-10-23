@@ -30,24 +30,15 @@ public class Map extends Mapper<Object, Text, Text, Text> {
         try {
             double[] numericValues = new double[EXPECTED_COLUMNS];
             numericValues[TEMPERATURE_INDEX] = Double.parseDouble(columns[TEMPERATURE_INDEX].trim());
-            if (!Double.isFinite(numericValues[TEMPERATURE_INDEX])) {
-                countInvalidRecord(context);
-                return;
-            }
+            if (!Double.isFinite(numericValues[TEMPERATURE_INDEX])) { countInvalidRecord(context); return; }
             for (int column : NUMERIC_COLUMNS) {
                 numericValues[column] = Double.parseDouble(columns[column].trim());
-                if (!Double.isFinite(numericValues[column])) {
-                    countInvalidRecord(context);
-                    return;
-                }
+                if (!Double.isFinite(numericValues[column])) { countInvalidRecord(context); return; }
             }
 
             String month = columns[2].trim().toLowerCase();
             String day = columns[3].trim().toLowerCase();
-            if (!contains(MONTHS, month) || !contains(DAYS, day)) {
-                countInvalidRecord(context);
-                return;
-            }
+            if (!contains(MONTHS, month) || !contains(DAYS, day)) { countInvalidRecord(context); return; }
 
             double temperature = numericValues[TEMPERATURE_INDEX];
             for (int i = 0; i < NUMERIC_COLUMNS.length; i++) { emit(context, NUMERIC_NAMES[i], temperature, numericValues[NUMERIC_COLUMNS[i]]); }
