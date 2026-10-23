@@ -50,37 +50,22 @@ public class Map extends Mapper<Object, Text, Text, Text> {
             }
 
             double temperature = numericValues[TEMPERATURE_INDEX];
-            for (int i = 0; i < NUMERIC_COLUMNS.length; i++) {
-                emit(context, NUMERIC_NAMES[i], temperature, numericValues[NUMERIC_COLUMNS[i]]);
-            }
-            for (String category : MONTHS) {
-                emit(context, "coluna 3 - mes=" + category, temperature, month.equals(category) ? 1.0 : 0.0);
-            }
-            for (String category : DAYS) {
-                emit(context, "coluna 4 - dia=" + category, temperature, day.equals(category) ? 1.0 : 0.0);
-            }
-        } catch (NumberFormatException e) {
-            countInvalidRecord(context);
-        }
+            for (int i = 0; i < NUMERIC_COLUMNS.length; i++) { emit(context, NUMERIC_NAMES[i], temperature, numericValues[NUMERIC_COLUMNS[i]]); }
+            for (String category : MONTHS) { emit(context, "coluna 3 - mes=" + category, temperature, month.equals(category) ? 1.0 : 0.0); }
+            for (String category : DAYS) { emit(context, "coluna 4 - dia=" + category, temperature, day.equals(category) ? 1.0 : 0.0); }
+        } catch (NumberFormatException e) { countInvalidRecord(context); }
     }
 
-    private void emit(Context context, String feature, double temperature, double value)
-            throws IOException, InterruptedException {
+    private void emit(Context context, String feature, double temperature, double value) throws IOException, InterruptedException {
         CorrelationStats stats = new CorrelationStats();
         stats.add(temperature, value);
         context.write(new Text(feature), new Text(stats.serialize()));
     }
 
     private boolean contains(String[] values, String target) {
-        for (String value : values) {
-            if (value.equals(target)) {
-                return true;
-            }
-        }
+        for (String value : values) { if (value.equals(target)) { return true; } }
         return false;
     }
 
-    private void countInvalidRecord(Context context) {
-        context.getCounter("CSV", "REGISTROS_INVALIDOS").increment(1);
-    }
+    private void countInvalidRecord(Context context) { context.getCounter("CSV", "REGISTROS_INVALIDOS").increment(1); }
 }

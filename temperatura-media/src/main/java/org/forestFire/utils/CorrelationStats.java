@@ -48,25 +48,17 @@ final class CorrelationStats {
     }
 
     double getCorrelation() {
-        if (varianceX <= 0.0 || varianceY <= 0.0) {
-            return Double.NaN;
-        }
+        if (varianceX <= 0.0 || varianceY <= 0.0) { return Double.NaN; }
         return covariance / Math.sqrt(varianceX * varianceY);
     }
 
-    long getCount() {
-        return count;
-    }
+    long getCount() { return count; }
 
-    String serialize() {
-        return count + "," + meanX + "," + meanY + "," + varianceX + "," + varianceY + "," + covariance;
-    }
+    String serialize() { return count + "," + meanX + "," + meanY + "," + varianceX + "," + varianceY + "," + covariance; }
 
     static CorrelationStats parse(String serialized) {
         String[] parts = serialized.split(",", -1);
-        if (parts.length != 6) {
-            throw new IllegalArgumentException("Estatistica de correlacao invalida");
-        }
+        if (parts.length != 6) { throw new IllegalArgumentException("Estatistica de correlacao invalida"); }
 
         CorrelationStats stats = new CorrelationStats();
         stats.count = Long.parseLong(parts[0]);

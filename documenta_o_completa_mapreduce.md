@@ -1,285 +1,336 @@
-# Documentação: Análise Estatística com Hadoop MapReduce
+# Documentação completa: correlações com Hadoop MapReduce
 
-Este documento explica detalhadamente o código desenvolvido para calcular **Mínimo, Máximo, Média, Variância e Desvio Padrão** usando o ecossistema Hadoop MapReduce.
+Este documento descreve a versão atual do projeto `temperatura-media`. O job
+MapReduce lê o arquivo `forestfireinput.csv` e calcula a correlação de Pearson
+entre a temperatura e cada variável selecionada do dataset.
 
----
+O resultado não é mais uma média global de temperatura. Para cada variável, o
+job produz:
 
-## 1. Como a Arquitetura Funciona (O "Porquê")
-
-O MapReduce é um modelo de programação distribuída. Quando lidamos com Terabytes de dados, não podemos carregar tudo na memória para calcular uma média ou variância.
-A solução é usar a matemática a nosso favor: em vez de guardar os números, guardamos **estado** (soma, contagem, soma dos quadrados, etc.).
-
-A arquitetura usa três passos:
-
-1. **Map (Mapeamento):** Lê cada linha, isola o valor desejado (temperatura) e o prepara para envio.
-2. **Combine (Combinação Local):** Um "mini-reducer" que roda no mesmo nó do Mapper. Ele junta os milhares de registros daquele nó em um único pacote consolidado. Isso reduz drasticamente o tráfego de rede.
-3. **Reduce (Redução Global):** Recebe os pacotes consolidados de todos os Combiners, faz a soma final e aplica as fórmulas matemáticas definitivas.
-
----
-
-## 2. Explicação Linha a Linha dos Códigos
-
-### A. Classe `Main.java` (A Orquestração)
-
-Esta classe configura o "Job" (tarefa) do Hadoop. É o ponto de entrada da aplicação.
-
-```java
-package org.forestFire; // Define o pacote do projeto
-
-import org.apache.hadoop.conf.Configuration; // Classe para gerenciar configurações do Hadoop
-import org.apache.hadoop.fs.Path; // Classe para lidar com caminhos de arquivos HDFS/locais
-import org.apache.hadoop.io.Text; // Tipo de dado otimizado do Hadoop equivalente ao String do Java
-import org.apache.hadoop.mapreduce.Job; // Classe que representa a tarefa MapReduce
-import org.apache.hadoop.mapreduce.lib.input.FileInputFormat; // Lida com a entrada de dados
-import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat; // Lida com a saída de dados
-
-public class Main {
-    public static void main(String[] args) throws Exception {
-        Configuration conf = new Configuration(); // Cria o objeto de configuração base
-
-        // As duas linhas abaixo forçam a execução no modo local (ideal para testes sem cluster real)
-        conf.set("mapreduce.framework.name", "local");
-        conf.set("fs.defaultFS", "file:///");
-
-        // Verifica se o usuário passou os dois caminhos (entrada e saída) no terminal
-        if (args.length != 2) {
-            System.err.println("Uso: Main <caminho_entrada> <diretorio_saida>");
-            System.exit(2); // Encerra com erro se os argumentos faltarem
-        }
-
-        // Cria a instância do Job e dá um nome para ele aparecer nos logs
-        Job job = Job.getInstance(conf, "Analise de Temperatura Completa");
-        job.setJarByClass(Main.class); // Ajuda o Hadoop a encontrar os arquivos compilados (.jar)
-
-        // Define quais classes executarão as fases do processo
-        job.setMapperClass(Map.class);
-        job.setCombinerClass(Combine.class); // Ativa otimização de rede
-        job.setReducerClass(Reduce.class);
-
-        // Define os tipos de dados (Chave, Valor) que sairão do Map/Combine
-        job.setMapOutputKeyClass(Text.class);
-        job.setMapOutputValueClass(Text.class);
-      
-        // Define os tipos de dados (Chave, Valor) finais gerados no arquivo de saída
-        job.setOutputKeyClass(Text.class);
-        job.setOutputValueClass(Text.class);
-
-        // Define de onde ler e onde salvar os resultados (baseado nos args do terminal)
-        FileInputFormat.addInputPath(job, new Path(args[0]));
-        FileOutputFormat.setOutputPath(job, new Path(args[1]));
-
-        // Dispara o Job e aguarda a conclusão. Retorna 0 (sucesso) ou 1 (erro) para o SO.
-        System.exit(job.waitForCompletion(true) ? 0 : 1);
-    }
-}
+```text
+r=<correlação de Pearson>; n=<quantidade de registros>
 ```
 
-### B. Classe `Map.java` (A Extração)
+Exemplo:
 
-O Mapper é executado para *cada linha* do seu arquivo `.csv`.
-
-```java
-package org.forestFire;
-
-import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapreduce.Mapper;
-import java.io.IOException;
-
-// A classe herda Mapper. Os genéricos <Object, Text, Text, Text> representam:
-// <ChaveEntrada, ValorEntrada, ChaveSaida, ValorSaida>
-public class Map extends Mapper<Object, Text, Text, Text> {
-  
-    // Como queremos a média GLOBAL, todos os dados precisam ir para o mesmo Reducer.
-    // Para forçar isso, emitimos todos os valores com a MESMA chave estática.
-    private final static Text chaveEstatica = new Text("temperatura_estatisticas");
-  
-    // Objeto reaproveitado para evitar criação excessiva na memória
-    private Text valorEmitido = new Text(); 
-
-    // O método map é chamado automaticamente para cada linha de texto
-    public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
-        // Separa a linha (String) do CSV em um array, usando a vírgula como delimitador
-        String[] colunas = value.toString().split(",");
-
-        // Só processa se a linha tiver colunas suficientes (evita erro IndexOutOfBounds)
-        if (colunas.length > 8) {
-            try {
-                // Pega a coluna 8 (Temperatura) e converte de String para Double
-                double temp = Double.parseDouble(colunas[8]);
-              
-                // Prepara a variável ao quadrado (necessária para variância)
-                double tempQuadrado = temp * temp;
-              
-                // Monta o pacote de dados no formato: "soma,soma_quadrados,contagem,min,max"
-                // Aqui no nível individual, a temperatura é ela mesma o min e o max.
-                valorEmitido.set(temp + "," + tempQuadrado + ",1," + temp + "," + temp);
-              
-                // Escreve a chave e o pacote de dados para ir ao Combiner/Reducer
-                context.write(chaveEstatica, valorEmitido);
-              
-            } catch (NumberFormatException e) {
-                // Se a conversão falhar (ex: cabeçalho com texto em vez de número), ignora a linha.
-            }
-        }
-    }
-}
+```text
+coluna 7 - DC    r=0.496208; n=517
 ```
 
-### C. Classe `Combine.java` (A Otimização Local)
+## 1. Arquitetura do job
 
-O Combiner agrupa os registros dentro da própria máquina antes de enviar pela rede.
+O fluxo possui quatro partes:
 
-```java
-package org.forestFire;
+1. **Mapper:** valida cada linha do CSV e emite estatísticas parciais para cada
+   variável comparada com a temperatura.
+2. **Combiner:** agrega estatísticas localmente no nó do Mapper, reduzindo o
+   volume transferido durante o shuffle.
+3. **Shuffle:** agrupa os valores pela chave da variável, como
+   `coluna 7 - DC` ou `coluna 3 - mes=aug`.
+4. **Reducer:** combina os estados recebidos, calcula a correlação final e
+   grava uma linha por variável.
 
-import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapreduce.Reducer;
-import java.io.IOException;
+O estado estatístico é associativo: ele pode ser calculado em partes e depois
+mesclado sem carregar todos os registros na memória. Isso permite executar a
+mesma lógica localmente ou em um cluster Hadoop.
 
-// Funciona exatamente como um Reducer, mas a saída deve ter a mesma estrutura da entrada
-public class Combine extends Reducer<Text, Text, Text, Text> {
-    private Text valorParcial = new Text();
+## 2. Configuração do job
 
-    // Recebe a chave ("temperatura_estatisticas") e uma lista iterável contendo todos 
-    // os valores (Strings) gerados pelos Mappers locais
-    public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
-        // Inicializa acumuladores
-        double somaTemperaturas = 0.0;
-        double somaQuadrados = 0.0;
-        int contagemTotal = 0;
-      
-        // Inicializa min/max com extremos (Double.MAX_VALUE é o maior número possível)
-        // Isso garante que o primeiro número que chegar irá substituir esses valores.
-        double minLocal = Double.MAX_VALUE;
-        double maxLocal = Double.MIN_VALUE;
+Arquivo: `temperatura-media/src/main/java/org/forestFire/Main.java`
 
-        // Itera por todos os valores enviados pelos Mappers
-        for (Text val : values) {
-            // Quebra o pacote do Mapper
-            String[] partes = val.toString().split(",");
-          
-            // Soma os valores nos acumuladores locais
-            somaTemperaturas += Double.parseDouble(partes[0]);
-            somaQuadrados += Double.parseDouble(partes[1]);
-            contagemTotal += Integer.parseInt(partes[2]);
-          
-            // Pega o min/max do pacote atual
-            double tempMinAtual = Double.parseDouble(partes[3]);
-            double tempMaxAtual = Double.parseDouble(partes[4]);
-          
-            // Descobre qual é o verdadeiro menor e maior valor desse nó
-            if (tempMinAtual < minLocal) minLocal = tempMinAtual;
-            if (tempMaxAtual > maxLocal) maxLocal = tempMaxAtual;
-        }
+O método `main` recebe exatamente dois argumentos:
 
-        // Reconstrói o pacote com os valores agregados e repassa pra frente
-        valorParcial.set(somaTemperaturas + "," + somaQuadrados + "," + contagemTotal + "," + minLocal + "," + maxLocal);
-        context.write(key, valorParcial);
-    }
-}
+```text
+<caminho_entrada> <diretorio_saida>
 ```
 
-### D. Classe `Reduce.java` (O Cálculo Final)
-
-Recebe os pacotes já parcialmente somados pelos Combiners de todo o cluster.
+O job configura:
 
 ```java
-package org.forestFire;
-
-import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapreduce.Reducer;
-import java.io.IOException;
-
-public class Reduce extends Reducer<Text, Text, Text, Text> {
-    private Text resultadoEstatisticas = new Text();
-
-    // Estrutura idêntica ao Combiner, mas o iterable agora tem os pacotes dos Combiners
-    public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
-        double somaTemperaturas = 0.0;
-        double somaQuadrados = 0.0;
-        long contagemTotal = 0; // 'long' porque N pode ficar gigantesco no cluster inteiro
-      
-        double minGlobal = Double.MAX_VALUE;
-        double maxGlobal = Double.MIN_VALUE;
-
-        // O processo de agregação é o mesmo do Combiner
-        for (Text val : values) {
-            String[] partes = val.toString().split(",");
-          
-            somaTemperaturas += Double.parseDouble(partes[0]);
-            somaQuadrados += Double.parseDouble(partes[1]);
-            contagemTotal += Long.parseLong(partes[2]);
-          
-            double tempMinAtual = Double.parseDouble(partes[3]);
-            double tempMaxAtual = Double.parseDouble(partes[4]);
-          
-            if (tempMinAtual < minGlobal) minGlobal = tempMinAtual;
-            if (tempMaxAtual > maxGlobal) maxGlobal = tempMaxAtual;
-        }
-
-        // Impede divisão por zero se houver 1 ou 0 registros
-        if (contagemTotal > 1) { 
-            // Calcula as estatísticas
-            double media = somaTemperaturas / contagemTotal;
-          
-            // Fórmula computacional da variância amostral
-            // $$Vari\hat{a}ncia = \frac{\sum{x^2} - \frac{(\sum{x})^2}{N}}{N-1}$$
-            double variancia = (somaQuadrados - ((somaTemperaturas * somaTemperaturas) / contagemTotal)) / (contagemTotal - 1);
-          
-            // O Desvio padrão é a raiz da variância
-            double desvioPadrao = Math.sqrt(variancia);
-          
-            // String.format() formata os doubles limitando casas decimais (ex: %.2f é 2 casas)
-            String saida = String.format(" | Min: %.2f | Max: %.2f | Media: %.4f | Variancia: %.4f | Desvio Padrao: %.4f", 
-                                        minGlobal, maxGlobal, media, variancia, desvioPadrao);
-                                      
-            resultadoEstatisticas.set(saida);
-          
-            // Escreve a resposta definitiva no arquivo (part-r-00000)
-            context.write(new Text("Resultados:"), resultadoEstatisticas);
-        }
-    }
-}
+Configuration conf = new Configuration();
+Job job = Job.getInstance(conf, "Correlacoes com Temperatura");
 ```
 
----
+As classes do pipeline são registradas da seguinte forma:
 
-## 3. Como Utilizar (Compilação e Execução)
+```java
+job.setMapperClass(Map.class);
+job.setCombinerClass(Combine.class);
+job.setReducerClass(Reduce.class);
+```
 
-Para executar qualquer alteração neste projeto, os passos são padrão para projetos Maven com Hadoop:
+O Mapper e o Combiner usam `Text` como chave e valor. O Reducer também escreve
+`Text` na saída:
 
-1. **Limpar e Compilar:** Gera o pacote JAR.
+```java
+job.setMapOutputKeyClass(Text.class);
+job.setMapOutputValueClass(Text.class);
+job.setOutputKeyClass(Text.class);
+job.setOutputValueClass(Text.class);
+```
 
-   ```bash
-   mvn clean package
-   ```
-2. **Executar:** Envia o JAR para o Hadoop processar com os argumentos passados.
+Os caminhos são adicionados ao job com `FileInputFormat` e
+`FileOutputFormat`. O Hadoop exige que o diretório de saída não exista antes
+da execução.
 
-   ```bash
-   hadoop jar target/temperatura-media-1.0-SNAPSHOT.jar org.forestFire.Main caminho/do/seu/dataset.csv caminho/pasta_de_saida
-   ```
+## 3. Mapper: validação e emissão
 
-   *Atenção:* A pasta de saída não pode existir previamente, o Hadoop a criará. Se existir, ele retorna erro para evitar sobrescrita acidental.
+Arquivo: `temperatura-media/src/main/java/org/forestFire/utils/Map.java`
 
----
+O dataset possui 13 colunas. A temperatura está na coluna de índice 8, que
+corresponde à nona coluna do CSV:
 
-## 4. Aplicações para Outras Situações
+```text
+0: X
+1: Y
+2: month
+3: day
+4: FFMC
+5: DMC
+6: DC
+7: ISI
+8: temp
+9: RH
+10: wind
+11: rain
+12: area
+```
 
-Este modelo (`Soma, Soma Quadrados, Contagem, Min, Max`) é um **Padrão de Agregação Matemática**. Ele é universal e altamente escalável. Você pode aplicá-lo em muitos outros contextos:
+O Mapper executa estas validações:
 
-### A. Estatísticas Agrupadas por Categoria
+- exige exatamente 13 colunas;
+- converte temperatura e variáveis numéricas para `double`;
+- rejeita valores não finitos (`NaN` e infinito);
+- verifica se o mês pertence à lista `jan` até `dec`;
+- verifica se o dia pertence à lista `mon` até `sun`;
+- contabiliza linhas inválidas no contador Hadoop
+  `CSV.REGISTROS_INVALIDOS`.
 
-Atualmente estamos emitindo uma chave estática `"temperatura_estatisticas"`. Se você mudar o `Map.java` para emitir categorias em vez de uma chave fixa, o Hadoop fará o cálculo para cada grupo separadamente.
+Linhas inválidas são descartadas sem interromper o job.
 
-* **Exemplo (Varejo):** Qual a média e variação de gasto por Estado?
-  * *Mapper emite:* `("São Paulo", "150,22500,1,150,150")`
-  * *Resultado:* O Hadoop criará uma linha no arquivo final para cada Estado com suas próprias métricas de Min, Max, Média e Desvio Padrão.
+### Variáveis numéricas
 
-### B. Análise Financeira ou Sensor IoT
+Para cada registro válido, o Mapper emite a temperatura contra estas colunas:
 
-* **Ações na Bolsa:** Calcular a volatilidade (Desvio Padrão) dos preços diários de fechamento.
-* **Sensores IoT:** Em uma fábrica com milhares de sensores lendo a vibração por segundo. Extraia as métricas e observe o *Max* (pico de anomalia) e o *Desvio Padrão* (instabilidade).
+```text
+coluna 1 - X
+coluna 2 - Y
+coluna 5 - FFMC
+coluna 6 - DMC
+coluna 7 - DC
+coluna 8 - ISI
+coluna 10 - RH
+coluna 11 - wind
+coluna 12 - rain
+coluna 13 - area
+```
 
-### C. Alterando o índice da coluna
+### Variáveis categóricas
 
-Basta mudar a linha `Double.parseDouble(colunas[8]);` para o índice de qualquer outra coluna no seu dataset para extrair as estatísticas de velocidade do vento (índice 10) ou chuva (índice 11) do mesmo CSV.
+Meses e dias são transformados em variáveis indicadoras. Para cada registro,
+o Mapper emite todas as categorias:
+
+```text
+coluna 3 - mes=jan
+...
+coluna 3 - mes=dec
+coluna 4 - dia=mon
+...
+coluna 4 - dia=sun
+```
+
+O valor da categoria é `1.0` quando o registro pertence à categoria e `0.0`
+caso contrário. Assim, também é possível calcular a correlação entre
+temperatura e a ocorrência de cada mês ou dia.
+
+## 4. Estado estatístico incremental
+
+Arquivo: `temperatura-media/src/main/java/org/forestFire/utils/CorrelationStats.java`
+
+Para cada par:
+
+```text
+x = temperatura
+y = variável analisada
+```
+
+o sistema armazena:
+
+```text
+count
+meanX
+meanY
+varianceX
+varianceY
+covariance
+```
+
+Para adicionar um registro, o código usa atualização incremental no estilo
+Welford. Isso evita guardar uma lista de valores e reduz problemas numéricos
+em comparação com calcular diretamente grandes somas de quadrados.
+
+O estado é serializado como:
+
+```text
+count,meanX,meanY,varianceX,varianceY,covariance
+```
+
+Por exemplo, o Mapper cria um estado com um único par e o envia como valor:
+
+```java
+CorrelationStats stats = new CorrelationStats();
+stats.add(temperature, value);
+context.write(new Text(feature), new Text(stats.serialize()));
+```
+
+## 5. Combiner: agregação local
+
+Arquivo: `temperatura-media/src/main/java/org/forestFire/utils/Combine.java`
+
+O Combiner recebe vários estados da mesma variável no mesmo Mapper. Ele:
+
+1. desserializa cada estado com `CorrelationStats.parse`;
+2. combina os estados usando `CorrelationStats.merge`;
+3. serializa um único estado parcial;
+4. emite novamente a mesma chave.
+
+O Combiner não deve produzir o resultado final. Ele deve preservar o mesmo
+formato de estado aceito pelo Reducer. O Hadoop pode executar o Combiner zero,
+uma ou várias vezes, por isso a operação de combinação precisa ser segura para
+ser repetida.
+
+## 6. Reducer: cálculo da correlação
+
+Arquivo: `temperatura-media/src/main/java/org/forestFire/utils/Reduce.java`
+
+Para cada variável, o Reducer combina todos os estados parciais recebidos.
+Depois aplica a fórmula da correlação de Pearson:
+
+```text
+r = covariance / sqrt(varianceX * varianceY)
+```
+
+O resultado é escrito com seis casas decimais:
+
+```java
+String.format(
+    java.util.Locale.ROOT,
+    "r=%.6f; n=%d",
+    correlation,
+    combined.getCount()
+)
+```
+
+Há dois casos tratados explicitamente:
+
+- menos de dois registros: `indefinida (menos de 2 registros)`;
+- variância zero ou correlação não finita: `indefinida (variancia zero)`.
+
+## 7. Compilação e execução
+
+O projeto usa Hadoop 3.3.6 nas dependências Maven e Java 11 como nível de
+compilação. O ambiente precisa ter Hadoop configurado:
+
+```bash
+export HADOOP_HOME=/usr/local/hadoop
+export HADOOP_CONF_DIR="$HADOOP_HOME/etc/hadoop"
+export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+export PATH="$HADOOP_HOME/bin:$HADOOP_HOME/sbin:$JAVA_HOME/bin:$PATH"
+```
+
+Verifique:
+
+```bash
+java -version
+mvn -version
+hadoop version
+```
+
+Compile o projeto:
+
+```bash
+cd /workspaces/Big-data/temperatura-media
+mvn clean package
+```
+
+Execute diretamente com o caminho atual do dataset:
+
+```bash
+rm -rf output-temperatura-correlacoes
+
+hadoop jar target/temperatura-media-1.0-SNAPSHOT.jar \
+  org.forestFire.Main \
+  src/main/resources/input/forestfireinput.csv \
+  output-temperatura-correlacoes
+```
+
+Leia o resultado bruto:
+
+```bash
+hadoop fs -cat output-temperatura-correlacoes/part-r-00000
+```
+
+## 8. Script automatizado
+
+O script [`hadoop_temperatura-media.bash`](./hadoop_temperatura-media.bash)
+carrega automaticamente a configuração em
+[`hadoop_temp_config.bash`](./hadoop_temp_config.bash), compila o projeto,
+remove a saída anterior, executa o job e formata a saída:
+
+```bash
+cd /workspaces/Big-data
+./hadoop_temperatura-media.bash
+```
+
+O script aceita entrada e saída alternativas:
+
+```bash
+./hadoop_temperatura-media.bash \
+  temperatura-media/src/main/resources/input/forestfireinput.csv \
+  output-temperatura-correlacoes
+```
+
+## 9. Resultado validado
+
+Com os 517 registros válidos do arquivo
+`src/main/resources/input/forestfireinput.csv`, a execução produziu, entre
+outros, os seguintes resultados:
+
+| Variável | Correlação (r) | n |
+|---|---:|---:|
+| coluna 1 - X | -0.051258 | 517 |
+| coluna 2 - Y | -0.024103 | 517 |
+| coluna 5 - FFMC | 0.431532 | 517 |
+| coluna 6 - DMC | 0.469594 | 517 |
+| coluna 7 - DC | 0.496208 | 517 |
+| coluna 8 - ISI | 0.394287 | 517 |
+| coluna 10 - RH | -0.527390 | 517 |
+| coluna 11 - wind | -0.227116 | 517 |
+| coluna 12 - rain | 0.069491 | 517 |
+| coluna 13 - area | 0.097844 | 517 |
+| coluna 3 - mes=aug | 0.351404 | 517 |
+| coluna 3 - mes=mar | -0.341797 | 517 |
+| coluna 4 - dia=wed | 0.090580 | 517 |
+
+Uma correlação positiva indica que a variável tende a aumentar junto com a
+temperatura; uma correlação negativa indica tendência inversa. Correlação
+próxima de zero indica pouca relação linear no conjunto analisado. Correlação
+não implica causalidade.
+
+## 10. Escalabilidade e extensões
+
+O estado incremental permite processar arquivos maiores sem manter todos os
+registros em memória. O Combiner reduz o tráfego de shuffle, e o Reducer
+calcula uma saída independente para cada variável.
+
+Para adicionar uma nova variável:
+
+1. inclua o índice no array `NUMERIC_COLUMNS`;
+2. inclua o nome correspondente em `NUMERIC_NAMES`;
+3. garanta que a coluna seja numérica;
+4. recompile e execute o job.
+
+Para executar em um cluster, os caminhos de entrada e saída podem ser
+substituídos por caminhos HDFS. A lógica do Mapper, Combiner e Reducer
+permanece a mesma; apenas a configuração do Hadoop e o sistema de arquivos
+utilizado mudam.

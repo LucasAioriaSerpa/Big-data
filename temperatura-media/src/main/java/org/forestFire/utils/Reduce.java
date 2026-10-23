@@ -22,8 +22,7 @@ public class Reduce extends Reducer<Text, Text, Text, Text> {
             context.write(key, new Text("indefinida (variancia zero)"));
             return;
         }
-
-        context.write(key, new Text(String.format(java.util.Locale.ROOT,
-                "r=%.6f; n=%d", correlation, combined.getCount())));
+        
+        context.write(key, new Text(String.format(java.util.Locale.ROOT, "r=%.6f; n=%d", correlation, combined.getCount())));
     }
 }
