@@ -2,7 +2,6 @@ package org.forestFire;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
@@ -16,15 +15,16 @@ public class Main {
     public static void main(String[] args) throws Exception {
         Configuration conf = new Configuration();
 
-        conf.set("mapreduce.framework.name", "local");
-        conf.set("fs.defaultFS", "file:///");
-
         if (args.length != 2) {
             System.err.println("Uso: Main <caminho_entrada> <diretorio_saida>");
             System.exit(2);
         }
 
+<<<<<<< HEAD
         Job job = Job.getInstance(conf, "Analise de Temperatura Completa");
+=======
+        Job job = Job.getInstance(conf, "Correlacoes com Temperatura");
+>>>>>>> f8707c3 (Correlação)
         job.setJarByClass(Main.class);
 
         job.setMapperClass(Map.class);

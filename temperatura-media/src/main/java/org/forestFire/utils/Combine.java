@@ -5,9 +5,9 @@ import org.apache.hadoop.mapreduce.Reducer;
 import java.io.IOException;
 
 public class Combine extends Reducer<Text, Text, Text, Text> {
-    private Text valorParcial = new Text();
-
+    @Override
     public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
+<<<<<<< HEAD
         double somaTemperaturas = 0.0;
         double somaQuadrados = 0.0;
         int contagemTotal = 0;
@@ -35,5 +35,12 @@ public class Combine extends Reducer<Text, Text, Text, Text> {
             minLocal + "," + maxLocal
         );
         context.write(key, valorParcial);
+=======
+        CorrelationStats combined = new CorrelationStats();
+        for (Text val : values) {
+            combined.merge(CorrelationStats.parse(val.toString()));
+        }
+        context.write(key, new Text(combined.serialize()));
+>>>>>>> f8707c3 (Correlação)
     }
 }

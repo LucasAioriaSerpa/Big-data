@@ -5,6 +5,7 @@ import org.apache.hadoop.mapreduce.Reducer;
 import java.io.IOException;
 
 public class Reduce extends Reducer<Text, Text, Text, Text> {
+<<<<<<< HEAD
     private Text resultadoEstatisticas = new Text();
 
     public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
@@ -41,6 +42,27 @@ public class Reduce extends Reducer<Text, Text, Text, Text> {
             );
             resultadoEstatisticas.set(saida);
             context.write(new Text("Resultados:"), resultadoEstatisticas);
+=======
+    @Override
+    public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
+        CorrelationStats combined = new CorrelationStats();
+        for (Text val : values) {
+            combined.merge(CorrelationStats.parse(val.toString()));
         }
+
+        if (combined.getCount() < 2) {
+            context.write(key, new Text("indefinida (menos de 2 registros)"));
+            return;
+>>>>>>> f8707c3 (Correlação)
+        }
+
+        double correlation = combined.getCorrelation();
+        if (!Double.isFinite(correlation)) {
+            context.write(key, new Text("indefinida (variancia zero)"));
+            return;
+        }
+
+        context.write(key, new Text(String.format(java.util.Locale.ROOT,
+                "r=%.6f; n=%d", correlation, combined.getCount())));
     }
 }
