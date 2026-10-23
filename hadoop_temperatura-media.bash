@@ -35,3 +35,5 @@ BEGIN {
     gsub(/^[[:space:]]+|[[:space:]]+$/, "", count[2])
     printf "%-26s | %14s | %5s\n", $1, correlation[2], count[2]
 }'
+
+cd ..
