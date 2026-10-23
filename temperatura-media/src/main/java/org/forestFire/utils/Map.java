@@ -6,10 +6,6 @@ import org.apache.hadoop.mapreduce.Mapper;
 import java.io.IOException;
 
 public class Map extends Mapper<Object, Text, Text, Text> {
-<<<<<<< HEAD
-    private final static Text chaveEstatica = new Text("temperatura_estatisticas");
-    private Text valorEmitido = new Text();
-=======
     private static final int TEMPERATURE_INDEX = 8;
     private static final int EXPECTED_COLUMNS = 13;
     private static final int[] NUMERIC_COLUMNS = {0, 1, 4, 5, 6, 7, 9, 10, 11, 12};
@@ -22,28 +18,9 @@ public class Map extends Mapper<Object, Text, Text, Text> {
             "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"
     };
     private static final String[] DAYS = {"mon", "tue", "wed", "thu", "fri", "sat", "sun"};
->>>>>>> f8707c3 (Correlação)
 
     @Override
     public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
-<<<<<<< HEAD
-        String[] colunas = value.toString().split(",");
-        
-        if (colunas.length > 8) {
-            try {
-                double temp = Double.parseDouble(colunas[8]);
-                double tempQuadrado = temp * temp;
-                
-                valorEmitido.set(
-                    temp + "," + 
-                    tempQuadrado + ",1," + 
-                    temp + "," + 
-                    temp
-                );
-                context.write(chaveEstatica, valorEmitido);
-                
-            } catch (NumberFormatException e) { /* Ignora cabeçalhos e linhas corrompidas */ }
-=======
         String[] columns = value.toString().split(",", -1);
         if (columns.length != EXPECTED_COLUMNS) {
             countInvalidRecord(context);
@@ -84,7 +61,6 @@ public class Map extends Mapper<Object, Text, Text, Text> {
             }
         } catch (NumberFormatException e) {
             countInvalidRecord(context);
->>>>>>> f8707c3 (Correlação)
         }
     }
 

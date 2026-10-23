@@ -20,11 +20,7 @@ public class Main {
             System.exit(2);
         }
 
-<<<<<<< HEAD
-        Job job = Job.getInstance(conf, "Analise de Temperatura Completa");
-=======
         Job job = Job.getInstance(conf, "Correlacoes com Temperatura");
->>>>>>> f8707c3 (Correlação)
         job.setJarByClass(Main.class);
 
         job.setMapperClass(Map.class);
