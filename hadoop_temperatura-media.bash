@@ -1,7 +1,19 @@
 #!/usr/bin/env bash
 set -e
 
-cd "$(dirname "$0")/temperatura-media"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$SCRIPT_DIR/temperatura-media"
+
+if [[ -f "$SCRIPT_DIR/hadoop_temp_config.bash" ]]; then
+    source "$SCRIPT_DIR/hadoop_temp_config.bash"
+fi
+
+if ! command -v hadoop >/dev/null 2>&1; then
+    printf 'Erro: Hadoop não encontrado. Configure HADOOP_HOME e PATH antes de executar.\n' >&2
+    exit 127
+fi
+
+cd "$PROJECT_DIR"
 INPUT_PATH="${1:-src/main/resources/input/forestfireinput.csv}"
 OUTPUT_PATH="${2:-output-temperatura-correlacoes}"
 
