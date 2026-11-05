@@ -1,4 +1,4 @@
-package org.forestFire.utils;
+package org.forestFire.correlation;
 
 final class CorrelationStats {
     private long count;
