@@ -22,6 +22,7 @@ public final class ClusterReducer extends Reducer<Text, Text, Text, Text> {
     public void reduce(Text key, Iterable<Text> values, Context context)
             throws IOException, InterruptedException {
         long count = 0;
+        double inertia = 0.0;
         double[] centroidSum = new double[FireRecord.CLUSTER_FEATURE_COUNT];
         double[] sumX = new double[FireRecord.CORRELATION_FEATURE_COUNT];
         double[] sumY = new double[FireRecord.CORRELATION_FEATURE_COUNT];
@@ -30,8 +31,11 @@ public final class ClusterReducer extends Reducer<Text, Text, Text, Text> {
         double[] sumXY = new double[FireRecord.CORRELATION_FEATURE_COUNT];
 
         for (Text value : values) {
-            double[] features = parseVector(value.toString());
+            String[] serialized = value.toString().split("\\|", 2);
+            double distance = Double.parseDouble(serialized[0]);
+            double[] features = parseVector(serialized[1]);
             count++;
+            inertia += distance;
             double temperature = features[6];
             for (int i = 0; i < FireRecord.CLUSTER_FEATURE_COUNT; i++) {
                 centroidSum[i] += (features[i] - means[i]) / deviations[i];
@@ -50,6 +54,7 @@ public final class ClusterReducer extends Reducer<Text, Text, Text, Text> {
         result.append(count).append('\t').append(serializeCentroid(centroidSum, count));
         result.append('\t').append(serializeCorrelations(
                 count, sumX, sumY, sumX2, sumY2, sumXY));
+        result.append('\t').append(inertia);
         context.write(new Text(key.toString()), new Text(result.toString()));
     }
 

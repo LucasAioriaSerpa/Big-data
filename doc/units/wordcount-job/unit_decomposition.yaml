@@ -1,0 +1,9 @@
+unit: wordcount-job
+commit: false
+candidate_splits:
+  - id: "BigData-Mavem/src/main/java/org/countWords/Main.java:15-37"
+    drivers: [concern_split]
+    rationale: "A orquestração do job e o processamento de palavras são responsabilidades separáveis, embora hoje sejam um único fluxo CLI."
+    source_slice:
+      file: "BigData-Mavem/src/main/java/org/countWords/Main.java"
+      lines: [15, 37]

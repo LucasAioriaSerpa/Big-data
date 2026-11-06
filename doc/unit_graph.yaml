@@ -1,0 +1,38 @@
+units:
+  - name: wordcount-job
+    trigger: cli
+    trigger_detail: "java/hadoop jar org.countWords.Main <input> <output>"
+    source_anchors:
+      - path: BigData-Mavem/src/main/java/org/countWords/Main.java
+        line: 15
+      - path: BigData-Mavem/src/main/java/org/countWords/utils/_Map.java
+        line: 14
+      - path: BigData-Mavem/src/main/java/org/countWords/utils/_Reduce.java
+        line: 12
+    exported_signature:
+      - method: "void org.countWords.Main.main(String[] args)"
+        source_loc: "BigData-Mavem/src/main/java/org/countWords/Main.java:15"
+        stability: frozen
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs: []
+
+  - name: forestfire-clustering-job
+    trigger: cli
+    trigger_detail: "java/hadoop jar org.forestFire.Main <input> <output>"
+    source_anchors:
+      - path: temperatura-media/src/main/java/org/forestFire/Main.java
+        line: 20
+      - path: temperatura-media/src/main/java/org/forestFire/data/FireRecord.java
+        line: 5
+      - path: temperatura-media/src/main/java/org/forestFire/clustering/ClusterMapper.java
+        line: 10
+      - path: temperatura-media/src/main/java/org/forestFire/clustering/ClusterReducer.java
+        line: 10
+    exported_signature:
+      - method: "void org.forestFire.Main.main(String[] args)"
+        source_loc: "temperatura-media/src/main/java/org/forestFire/Main.java:20"
+        stability: frozen
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs: []

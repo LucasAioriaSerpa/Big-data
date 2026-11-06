@@ -12,6 +12,7 @@ public final class ClusterMapper extends Mapper<LongWritable, Text, Text, Text> 
     private double[][] centroids;
     private double[] means;
     private double[] deviations;
+    private double selectedDistance;
 
     @Override
     protected void setup(Context context) {
@@ -28,7 +29,8 @@ public final class ClusterMapper extends Mapper<LongWritable, Text, Text, Text> 
             FireRecord record = FireRecord.parse(value.toString());
             double[] point = record.clusterFeatures();
             int cluster = closest(point);
-            context.write(new Text(Integer.toString(cluster)), new Text(serialize(record)));
+            context.write(new Text(Integer.toString(cluster)),
+                    new Text(serialize(record, selectedDistance)));
         } catch (IllegalArgumentException e) {
             context.getCounter("CSV", "REGISTROS_INVALIDOS").increment(1);
         }
@@ -49,11 +51,13 @@ public final class ClusterMapper extends Mapper<LongWritable, Text, Text, Text> 
                 selected = cluster;
             }
         }
+        selectedDistance = best;
         return selected;
     }
 
-    private String serialize(FireRecord record) {
+    private String serialize(FireRecord record, double distance) {
         StringBuilder result = new StringBuilder();
+        result.append(distance).append('|');
         for (int i = 0; i < FireRecord.CORRELATION_FEATURE_COUNT; i++) {
             if (i > 0) {
                 result.append(',');

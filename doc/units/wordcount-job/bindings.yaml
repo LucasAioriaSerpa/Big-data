@@ -1,0 +1,21 @@
+unit: wordcount-job
+bindings:
+  - type: convention
+    name: "org.countWords.Main como classe de entrada do hadoop jar"
+    source_loc: "BigData-Mavem/src/main/java/org/countWords/Main.java:25"
+    target: "Main"
+    must_appear_in_target: true
+    notes: "Job registra mapper e reducer Hadoop."
+runtime_config:
+  - key: "mapreduce.framework.name"
+    source_loc: "BigData-Mavem/src/main/java/org/countWords/Main.java:17"
+    source: code
+    default_value: "local"
+    must_appear_in_target: true
+    notes: "Força execução local."
+  - key: "fs.defaultFS"
+    source_loc: "BigData-Mavem/src/main/java/org/countWords/Main.java:18"
+    source: code
+    default_value: "file:///"
+    must_appear_in_target: true
+    notes: "Usa filesystem local."

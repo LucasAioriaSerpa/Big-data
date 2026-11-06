@@ -11,6 +11,7 @@ export HADOOP_HOME=/usr/local/hadoop
 export HADOOP_CONF_DIR="$HADOOP_HOME/etc/hadoop"
 export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 export PATH="$HADOOP_HOME/bin:$HADOOP_HOME/sbin:$JAVA_HOME/bin:$PATH"
+echo HADOOP CONFIGURADO COM SUCESSO ! ! !
 ```
 
 ## Comandos para os projetos JAVA
@@ -53,17 +54,7 @@ hadoop jar target/temperatura-media-1.0-SNAPSHOT.jar \
     org.forestFire.Main \
     "$INPUT_PATH" \
     "$OUTPUT_PATH"
-hadoop fs -cat "$OUTPUT_PATH/part-r-00000" | awk -F '\t' '
-BEGIN {
-    printf "%-26s | %14s | %5s\n", "Variavel", "Correlacao (r)", "n"
-    printf "%-26s-+-%14s-+-%5s\n", "--------------------------", "--------------", "-----"
-}
-{
-    split($2, stats, ";")
-    split(stats[1], correlation, "=")
-    split(stats[2], count, "=")
-    gsub(/^[[:space:]]+|[[:space:]]+$/, "", count[2])
-    printf "%-26s | %14s | %5s\n", $1, correlation[2], count[2]
-}'
+hadoop fs -cat "$OUTPUT_PATH/part-r-00000" |
+    awk -F '\t' -f "$PROJECT_DIR/utils/format-output.awk"
 cd ..
 ```

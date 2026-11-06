@@ -1,0 +1,30 @@
+unit: wordcount-job
+side_effects:
+  - source_loc: "BigData-Mavem/src/main/java/org/countWords/Main.java:34"
+    effect: "lê o arquivo de entrada fornecido"
+    must_preserve: true
+  - source_loc: "BigData-Mavem/src/main/java/org/countWords/Main.java:35"
+    effect: "cria a saída Hadoop no diretório informado"
+    must_preserve: true
+branches:
+  - source_loc: "BigData-Mavem/src/main/java/org/countWords/Main.java:20"
+    condition: "args.length != 2"
+    behavior: "imprime uso e encerra com código 2"
+    must_preserve: true
+  - source_loc: "BigData-Mavem/src/main/java/org/countWords/utils/_Map.java:22"
+    condition: "token normalizado fica vazio"
+    behavior: "descarta o token"
+    must_preserve: true
+error_paths:
+  - source_loc: "BigData-Mavem/src/main/java/org/countWords/Main.java:37"
+    trigger: "job Hadoop não conclui com sucesso"
+    outcome: "processo encerra com código 1"
+    contract: "exit code 1"
+    must_preserve: true
+concurrency:
+  model: "sync"
+  tx_boundary:
+    source_loc: "BigData-Mavem/src/main/java/org/countWords/Main.java:37"
+    scope: "aguarda conclusão síncrona do job MapReduce"
+    isolation: "não especificada"
+    must_preserve: true

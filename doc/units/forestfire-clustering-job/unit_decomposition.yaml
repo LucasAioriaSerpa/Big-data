@@ -1,0 +1,15 @@
+unit: forestfire-clustering-job
+commit: false
+candidate_splits:
+  - id: "temperatura-media/src/main/java/org/forestFire/Main.java:20-83"
+    drivers: [concern_split, execution_model_split]
+    rationale: "A entrada calcula estatísticas locais, orquestra iterações distribuídas, lê resultados e formata a saída final."
+    source_slice:
+      file: "temperatura-media/src/main/java/org/forestFire/Main.java"
+      lines: [20, 83]
+  - id: "temperatura-media/src/main/java/org/forestFire/clustering/ClusterReducer.java:20-71"
+    drivers: [concern_split]
+    rationale: "O reducer agrega centróide e correlações no mesmo estado textual, permitindo avaliar uma separação futura das métricas."
+    source_slice:
+      file: "temperatura-media/src/main/java/org/forestFire/clustering/ClusterReducer.java"
+      lines: [20, 71]

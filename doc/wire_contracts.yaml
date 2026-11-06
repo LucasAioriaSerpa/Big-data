@@ -1,0 +1,43 @@
+contracts:
+  - name: wordcount-cli
+    unit: wordcount-job
+    type: file
+    stability: frozen
+    source_loc: "BigData-Mavem/src/main/java/org/countWords/Main.java:20"
+    contract:
+      method: "CLI"
+      path: "<input> <output>"
+      request: "dois argumentos; entrada textual e diretório de saída"
+      response: "arquivo part-r-00000 com palavra\\tcontagem"
+      error: "quantidade de argumentos inválida encerra com código 2; falha do job encerra com código 1"
+      auth: "não aplicável"
+    target_contract:
+      method: "org.countWords.Main.main(String[] args)"
+      notes: "Preservar dois argumentos e o formato textual de saída."
+    semantic_divergence:
+      - field: "token"
+        issue: "somente caracteres ASCII A-Z/a-z são mantidos; pontuação e acentos são removidos"
+        source_loc: "BigData-Mavem/src/main/java/org/countWords/utils/_Map.java:21"
+
+  - name: forestfire-cli
+    unit: forestfire-clustering-job
+    type: file
+    stability: frozen
+    source_loc: "temperatura-media/src/main/java/org/forestFire/Main.java:20"
+    contract:
+      method: "CLI"
+      path: "<input> <output>"
+      request: "CSV Forest Fires com 13 colunas"
+      response: "part-r-00000 com uma linha por cluster e k entre 2 e 4"
+      error: "argumentos inválidos encerram com código 2; entrada sem registros válidos lança IllegalArgumentException; job falho encerra com código 1"
+      auth: "não aplicável"
+    target_contract:
+      method: "org.forestFire.Main.main(String[] args)"
+      notes: "Preservar validação CSV, k=2..4, saída tabular e mensagens de indefinição."
+    semantic_divergence:
+      - field: "area"
+        issue: "area participa das correlações, mas não participa das dimensões de clustering"
+        source_loc: "temperatura-media/src/main/java/org/forestFire/data/FireRecord.java:17"
+      - field: "output"
+        issue: "o diretório de saída é apagado antes da escrita"
+        source_loc: "temperatura-media/src/main/java/org/forestFire/Main.java:65"

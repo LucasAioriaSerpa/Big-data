@@ -1,0 +1,46 @@
+unit: forestfire-clustering-job
+side_effects:
+  - source_loc: "temperatura-media/src/main/java/org/forestFire/Main.java:30"
+    effect: "lê registros válidos para calcular médias e desvios"
+    must_preserve: true
+  - source_loc: "temperatura-media/src/main/java/org/forestFire/Main.java:40"
+    effect: "executa jobs intermediários para cada k e iteração"
+    must_preserve: true
+  - source_loc: "temperatura-media/src/main/java/org/forestFire/Main.java:65"
+    effect: "remove e recria o diretório de saída final"
+    must_preserve: true
+branches:
+  - source_loc: "temperatura-media/src/main/java/org/forestFire/Main.java:23"
+    condition: "args.length != 2"
+    behavior: "imprime uso e encerra com código 2"
+    must_preserve: true
+  - source_loc: "temperatura-media/src/main/java/org/forestFire/Main.java:30"
+    condition: "nenhum registro válido"
+    behavior: "lança IllegalArgumentException"
+    must_preserve: true
+  - source_loc: "temperatura-media/src/main/java/org/forestFire/Main.java:50"
+    condition: "movimento dos centróides < 1e-4"
+    behavior: "encerra as iterações do k atual"
+    must_preserve: true
+  - source_loc: "temperatura-media/src/main/java/org/forestFire/Main.java:70"
+    condition: "cluster sem registros"
+    behavior: "emite cluster com zero e correlações indefinidas"
+    must_preserve: true
+error_paths:
+  - source_loc: "temperatura-media/src/main/java/org/forestFire/clustering/ClusterMapper.java:29"
+    trigger: "linha CSV inválida"
+    outcome: "descarta registro e incrementa contador CSV.REGISTROS_INVALIDOS"
+    contract: "registro inválido não interrompe o job"
+    must_preserve: true
+  - source_loc: "temperatura-media/src/main/java/org/forestFire/Main.java:45"
+    trigger: "job intermediário falha"
+    outcome: "encerra com código 1"
+    contract: "exit code 1"
+    must_preserve: true
+concurrency:
+  model: "sync"
+  tx_boundary:
+    source_loc: "temperatura-media/src/main/java/org/forestFire/Main.java:43"
+    scope: "aguarda cada job MapReduce antes de ler o resultado e iniciar a próxima iteração"
+    isolation: "não especificada"
+    must_preserve: true

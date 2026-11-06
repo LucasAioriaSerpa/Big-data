@@ -51,6 +51,7 @@ public class Main {
                 }
                 iterationResults = readResults(fs, iterationPath);
                 double[][] next = centroidsFromResults(iterationResults, k, centroids);
+                reinitializeEmptyClusters(iterationResults, next, records, means, deviations);
                 fs.delete(iterationPath, true);
                 if (movement(centroids, next) < 1e-4) {
                     centroids = next;
@@ -67,7 +68,7 @@ public class Main {
                 if (!present[cluster]) {
                     finalResults.add("k=" + k + "\t" + cluster + "\t0\t"
                             + serializeVector(centroids[cluster]) + "\t"
-                            + emptyCorrelations());
+                            + emptyCorrelations() + "\t0.0");
                 }
             }
         }
@@ -223,6 +224,54 @@ public class Main {
         return centroids;
     }
 
+    private static void reinitializeEmptyClusters(List<String> results, double[][] centroids,
+                                                  List<FireRecord> records, double[] means,
+                                                  double[] deviations) {
+        boolean[] present = new boolean[centroids.length];
+        for (String result : results) {
+            int cluster = Integer.parseInt(result.split("\t", -1)[0]);
+            present[cluster] = true;
+        }
+
+        boolean[] selected = new boolean[records.size()];
+        for (int cluster = 0; cluster < centroids.length; cluster++) {
+            if (!present[cluster]) {
+                int farthest = farthestAvailableRecord(records, selected, centroids, means, deviations);
+                if (farthest >= 0) {
+                    centroids[cluster] = normalizedPoint(records.get(farthest), means, deviations);
+                    selected[farthest] = true;
+                }
+            }
+        }
+    }
+
+    private static int farthestAvailableRecord(List<FireRecord> records, boolean[] selected,
+                                               double[][] centroids, double[] means,
+                                               double[] deviations) {
+        int farthest = -1;
+        double greatestDistance = Double.NEGATIVE_INFINITY;
+        for (int i = 0; i < records.size(); i++) {
+            if (selected[i]) continue;
+            double[] point = normalizedPoint(records.get(i), means, deviations);
+            double distance = nearestDistance(point, centroids, centroids.length);
+            if (distance > greatestDistance) {
+                greatestDistance = distance;
+                farthest = i;
+            }
+        }
+        return farthest;
+    }
+
+    private static double[] normalizedPoint(FireRecord record, double[] means,
+                                            double[] deviations) {
+        double[] values = record.clusterFeatures();
+        double[] result = new double[values.length];
+        for (int i = 0; i < values.length; i++) {
+            result[i] = (values[i] - means[i]) / deviations[i];
+        }
+        return result;
+    }
+
     private static String emptyCorrelations() {
         StringBuilder result = new StringBuilder();
         for (int i = 0; i < FireRecord.CORRELATION_FEATURE_COUNT; i++) {
@@ -235,7 +284,12 @@ public class Main {
     private static double movement(double[][] before, double[][] after) {
         double total = 0.0;
         for (int i = 0; i < before.length; i++) {
-            total += nearestDistance(after[i], before, before.length);
+            double distance = 0.0;
+            for (int j = 0; j < before[i].length; j++) {
+                double delta = after[i][j] - before[i][j];
+                distance += delta * delta;
+            }
+            total += distance;
         }
         return Math.sqrt(total);
     }

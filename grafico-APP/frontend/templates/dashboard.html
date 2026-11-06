@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Clusters Forest Fire</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <main class="container">
+    <header>
+      <p class="eyebrow">temperatura-media</p>
+      <h1>Clusters Forest Fire</h1>
+      <p>Dados calculados pelo Hadoop e disponibilizados pelo FastAPI.</p>
+    </header>
+
+    <section class="toolbar">
+      <label for="k-select">Configuração K</label>
+      <select id="k-select">
+        <option value="">Todas</option>
+        <option value="2">K = 2</option>
+        <option value="3">K = 3</option>
+        <option value="4">K = 4</option>
+      </select>
+      <button id="load-button" type="button">Atualizar</button>
+    </section>
+
+    <p id="status" role="status"></p>
+    <section id="cards" class="cards"></section>
+    <section class="chart-panel">
+      <h2>Curva do cotovelo</h2>
+      <p class="hint">A menor inércia indica melhor ajuste; procure o ponto onde a redução começa a desacelerar.</p>
+      <canvas id="elbow-chart"></canvas>
+    </section>
+    <section class="chart-panel">
+      <h2>Correlações</h2>
+      <canvas id="correlation-chart"></canvas>
+    </section>
+  </main>
+  <script src="{{ url_for('static', filename='dashboard.js') }}"></script>
+</body>
+</html>

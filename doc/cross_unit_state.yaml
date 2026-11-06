@@ -1,0 +1,6 @@
+flows: []
+notes: >
+  Não foram encontrados session, ThreadLocal, static state compartilhado,
+  cookies, headers, banco, cache ou atributos de request entre as unidades.
+  Os dados atravessam somente arquivos de entrada/saída e valores internos do
+  próprio job.

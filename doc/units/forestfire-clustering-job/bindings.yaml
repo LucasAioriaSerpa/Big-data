@@ -1,0 +1,39 @@
+unit: forestfire-clustering-job
+bindings:
+  - type: convention
+    name: "org.forestFire.Main como classe de entrada do hadoop jar"
+    source_loc: "temperatura-media/src/main/java/org/forestFire/Main.java:20"
+    target: "Main"
+    must_appear_in_target: true
+    notes: "Cria dinamicamente jobs Hadoop para cada k."
+  - type: convention
+    name: "Mapper/Reducer Hadoop"
+    source_loc: "temperatura-media/src/main/java/org/forestFire/Main.java:59"
+    target: "ClusterMapper/ClusterReducer"
+    must_appear_in_target: true
+    notes: "Map output e output usam Text."
+runtime_config:
+  - key: "forestfire.k"
+    source_loc: "temperatura-media/src/main/java/org/forestFire/Main.java:91"
+    source: code
+    default_value: "2..4"
+    must_appear_in_target: true
+    notes: "Número de clusters da execução."
+  - key: "forestfire.centroids"
+    source_loc: "temperatura-media/src/main/java/org/forestFire/Main.java:92"
+    source: code
+    default_value: "centróides serializados"
+    must_appear_in_target: true
+    notes: "Estado de iteração enviado ao mapper."
+  - key: "forestfire.means"
+    source_loc: "temperatura-media/src/main/java/org/forestFire/Main.java:93"
+    source: code
+    default_value: "médias serializadas"
+    must_appear_in_target: true
+    notes: "Normalização dos atributos."
+  - key: "forestfire.deviations"
+    source_loc: "temperatura-media/src/main/java/org/forestFire/Main.java:94"
+    source: code
+    default_value: "desvios serializados"
+    must_appear_in_target: true
+    notes: "Normalização dos atributos."

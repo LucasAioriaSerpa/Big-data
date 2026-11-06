@@ -1,0 +1,20 @@
+modules:
+  - name: hadoop-job-runtime
+    kind: config
+    source_loc: "BigData-Mavem/src/main/java/org/countWords/Main.java:16"
+    used_by_units:
+      - wordcount-job
+      - forestfire-clustering-job
+    fields:
+      - name: Configuration
+        type: "org.apache.hadoop.conf.Configuration"
+      - name: Job
+        type: "org.apache.hadoop.mapreduce.Job"
+      - name: FileInputFormat
+        type: "org.apache.hadoop.mapreduce.lib.input.FileInputFormat"
+      - name: FileOutputFormat
+        type: "org.apache.hadoop.mapreduce.lib.output.FileOutputFormat"
+    god_class: false
+    split_candidate: false
+    migration_strategy: wrap
+    notes: "Dependência conceitual comum do runtime Hadoop; as implementações permanecem em módulos Maven separados."

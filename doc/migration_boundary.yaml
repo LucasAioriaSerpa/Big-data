@@ -1,0 +1,27 @@
+user_intent:
+  raw_request: "Analisar o sistema atual e o seu contexto; produzir documentação em doc/"
+  inferred_acceptance:
+    - "documentar o estado atual sem alterar a aplicação"
+    - "registrar arquitetura, execução, riscos e evolução"
+  cleanup_required: false
+strategy: phased
+runtime_reachable:
+  - BigData-Mavem/src/main/java/org/countWords/Main.java
+  - temperatura-media/src/main/java/org/forestFire/Main.java
+must_rewrite: []
+copy_as_is:
+  - BigData-Mavem/pom.xml
+  - BigData-Mavem/src/main/java/org/countWords/Main.java
+  - temperatura-media/pom.xml
+  - temperatura-media/src/main/java/org/forestFire/Main.java
+legacy_allowed_to_remain:
+  - temperatura-media/src/main/java/org/forestFire/correlation/CorrelationMapper.java
+  - temperatura-media/src/main/java/org/forestFire/correlation/CorrelationCombiner.java
+  - temperatura-media/src/main/java/org/forestFire/correlation/CorrelationReducer.java
+defer_cleanup:
+  - "Decidir se o pipeline direto de correlação deve ser removido ou reativado após validação de uso."
+  - "Separar artefatos gerados target/ e outputs do histórico do projeto."
+full_rewrite_reason: null
+implementation_rule: >
+  Esta análise não solicita reescrita. Se uma evolução for aprovada, o escopo
+  deve ser definido por must_rewrite; source_anchors são evidência, não escopo.
