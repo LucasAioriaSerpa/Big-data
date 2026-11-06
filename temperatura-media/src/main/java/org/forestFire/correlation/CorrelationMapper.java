@@ -1,11 +1,11 @@
-package org.forestFire.utils;
+package org.forestFire.correlation;
 
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 
 import java.io.IOException;
 
-public class Map extends Mapper<Object, Text, Text, Text> {
+public class CorrelationMapper extends Mapper<Object, Text, Text, Text> {
     private static final int TEMPERATURE_INDEX = 8;
     private static final int EXPECTED_COLUMNS = 13;
     private static final int[] NUMERIC_COLUMNS = {0, 1, 4, 5, 6, 7, 9, 10, 11, 12};
