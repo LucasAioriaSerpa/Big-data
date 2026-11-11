@@ -31,17 +31,19 @@ public final class ClusterReducer extends Reducer<Text, Text, Text, Text> {
         double[] sumXY = new double[FireRecord.CORRELATION_FEATURE_COUNT];
 
         for (Text value : values) {
-            String[] serialized = value.toString().split("\\|", 2);
+            // distance|clusterFeatures(10, includes temp)|correlationFeatures(29, no temp)
+            String[] serialized = value.toString().split("\\|", 3);
             double distance = Double.parseDouble(serialized[0]);
-            double[] features = parseVector(serialized[1]);
+            double[] clusterFeatures = parseVector(serialized[1]);
+            double[] correlationFeatures = parseVector(serialized[2]);
             count++;
             inertia += distance;
-            double temperature = features[6];
+            double temperature = clusterFeatures[FireRecord.TEMPERATURE_INDEX];
             for (int i = 0; i < FireRecord.CLUSTER_FEATURE_COUNT; i++) {
-                centroidSum[i] += (features[i] - means[i]) / deviations[i];
+                centroidSum[i] += (clusterFeatures[i] - means[i]) / deviations[i];
             }
-            for (int i = 0; i < features.length; i++) {
-                double feature = features[i];
+            for (int i = 0; i < correlationFeatures.length; i++) {
+                double feature = correlationFeatures[i];
                 sumX[i] += temperature;
                 sumY[i] += feature;
                 sumX2[i] += temperature * temperature;

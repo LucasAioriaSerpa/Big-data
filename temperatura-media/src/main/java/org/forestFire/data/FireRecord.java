@@ -12,6 +12,10 @@ public final class FireRecord {
     public static final String[] DAYS = {"mon", "tue", "wed", "thu", "fri", "sat", "sun"};
     public static final int[] NUMERIC_COLUMNS = {0, 1, 4, 5, 6, 7, 8, 9, 10, 11, 12};
     public static final int CLUSTER_FEATURE_COUNT = 10; // excludes area, which is the fire outcome
+    // Position of temp inside the numeric array and inside clusterFeatures():
+    // X, Y, FFMC, DMC, DC, ISI, temp, RH, wind, rain.
+    // correlationValue() does NOT contain temp, so never use this index on it.
+    public static final int TEMPERATURE_INDEX = 6;
     private static final int[] CORRELATION_NUMERIC_INDICES = {0, 1, 2, 3, 4, 5, 7, 8, 9, 10};
     public static final int CORRELATION_FEATURE_COUNT = NUMERIC_NAMES.length + MONTHS.length + DAYS.length;
 
@@ -53,7 +57,7 @@ public final class FireRecord {
     }
 
     public double temperature() {
-        return numeric[6];
+        return numeric[TEMPERATURE_INDEX];
     }
 
     public double correlationValue(int index) {
