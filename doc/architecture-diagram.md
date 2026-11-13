@@ -12,7 +12,7 @@ flowchart TD
   S --> F[temperatura-media Main]
   F --> FI[forestfireinput.csv]
   F --> PRE[Leitura válida + médias/desvios]
-  PRE --> KP[K-means++ k=2..4]
+  PRE --> KP[K-means++ k=2..10]
   KP --> CM[ClusterMapper]
   CM --> CS[Shuffle por cluster]
   CS --> CR[ClusterReducer]
@@ -28,7 +28,7 @@ flowchart TD
 1. O job de palavras força execução local e grava a agregação textual.
 2. O job de incêndios lê os registros válidos antes do MapReduce para calcular
    normalização; em seguida executa jobs intermediários até convergência ou 50
-   iterações para cada `k` de 2 a 4.
+   iterações para cada `k` de 2 a 10.
 3. O reducer de clustering calcula simultaneamente centróides normalizados e
    correlações temperatura-versus-variável por cluster.
 4. O filesystem é a única fronteira de dados entre processo e job. Não há

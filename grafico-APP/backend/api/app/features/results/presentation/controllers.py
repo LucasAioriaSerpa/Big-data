@@ -1,4 +1,5 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Path as FastAPIPath, Query
+from fastapi.responses import PlainTextResponse
 
 from app.core.config import Settings
 from app.features.results.infrastructure.result_parser import ResultSourceError
@@ -23,7 +24,7 @@ def health() -> dict[str, str]:
 
 @router.get("/api/v1/results", response_model=list[ClusterResultResponse])
 def list_results(
-    k: int | None = Query(default=None, ge=2),
+    k: int | None = Query(default=None, ge=2, le=10),
     cluster: int | None = Query(default=None, ge=0),
 ) -> list[ClusterResultResponse]:
     try:
@@ -34,7 +35,9 @@ def list_results(
 
 
 @router.get("/api/v1/results/{k}", response_model=list[ClusterResultResponse])
-def list_results_by_k(k: int) -> list[ClusterResultResponse]:
+def list_results_by_k(
+    k: int = FastAPIPath(..., ge=2, le=10),
+) -> list[ClusterResultResponse]:
     return list_results(k=k)
 
 
@@ -56,8 +59,19 @@ def silhouette() -> list[SilhouettePointResponse]:
     return [SilhouettePointResponse(k=k, score=score) for k, score in points]
 
 
+@router.get("/api/v1/report/markdown", response_class=PlainTextResponse)
+def markdown_report() -> str:
+    try:
+        return _service().markdown_report()
+    except ResultSourceError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
 @router.get("/api/v1/results/{k}/{cluster}", response_model=ClusterResultResponse)
-def get_result(k: int, cluster: int) -> ClusterResultResponse:
+def get_result(
+    k: int = FastAPIPath(..., ge=2, le=10),
+    cluster: int = FastAPIPath(..., ge=0),
+) -> ClusterResultResponse:
     results = list_results(k=k, cluster=cluster)
     if not results:
         raise HTTPException(status_code=404, detail="Resultado não encontrado")

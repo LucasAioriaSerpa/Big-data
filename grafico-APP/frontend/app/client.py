@@ -55,3 +55,16 @@ class ResultsApiClient:
         if not isinstance(payload, list):
             raise BackendApiError("Resposta inválida recebida para o gráfico de silhueta.")
         return payload
+
+    def get_report_markdown(self) -> str:
+        try:
+            response = requests.get(
+                f"{self._base_url}/api/v1/report/markdown",
+                timeout=self._timeout_seconds,
+            )
+            response.raise_for_status()
+        except requests.RequestException as exc:
+            raise BackendApiError("Não foi possível gerar o relatório Markdown.") from exc
+        if not response.text.strip():
+            raise BackendApiError("O relatório Markdown recebido está vazio.")
+        return response.text

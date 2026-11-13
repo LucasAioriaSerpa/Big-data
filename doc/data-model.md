@@ -12,10 +12,10 @@ Fonte: [`FireRecord`](../temperatura-media/src/main/java/org/forestFire/data/Fir
 - Valores numéricos: `X`, `Y`, `FFMC`, `DMC`, `DC`, `ISI`, `temp`, `RH`,
   `wind`, `rain`, `area`.
 - O parser exige exatamente 13 colunas, valores finitos e mês/dia válidos.
-- `area` é preservada para correlação, mas excluída das 10 dimensões de
+- As 11 variáveis numéricas, incluindo `area`, participam das dimensões de
   clustering (`CLUSTER_FEATURE_COUNT`).
-- Variáveis categóricas são codificadas como indicadores binários para
-  correlação.
+- O clustering emite uma matriz de correlação 11×11 por cluster, com os pares
+  no formato `variavel_linha~variavel_coluna=valor`.
 
 ### `CorrelationStats`
 

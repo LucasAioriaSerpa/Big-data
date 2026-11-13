@@ -33,26 +33,22 @@ public class Main {
 
         FileSystem fs = FileSystem.get(conf);
         List<FireRecord> records = readRecords(fs, new Path(args[0]));
-        if (records.isEmpty()) {
-            throw new IllegalArgumentException("Nenhum registro valido encontrado");
-        }
+        if (records.isEmpty()) { throw new IllegalArgumentException("Nenhum registro valido encontrado"); }
         double[] means = means(records);
         double[] deviations = deviations(records, means);
         List<String> finalResults = new ArrayList<>();
 
-        Random randK = new Random();
-        int maxK = 20;
-        int minK = 4;
+        int maxK = 10;
+        int minK = 2;
 
-        for (int k = 2; k <= (randK.nextInt(maxK - minK + 1) + minK); k++) {
+        for (int k = minK; k <= maxK; k++) {
             double[][] centroids = initializeKMeansPlusPlus(records, means, deviations, k);
             List<String> iterationResults = new ArrayList<>();
             for (int iteration = 0; iteration < 50; iteration++) {
                 Path iterationPath = new Path(args[1] + "-work-" + k + "-" + iteration);
+                fs.delete(iterationPath, true);
                 Job job = createJob(conf, args[0], iterationPath, k, centroids, means, deviations);
-                if (!job.waitForCompletion(true)) {
-                    System.exit(1);
-                }
+                if (!job.waitForCompletion(true)) { System.exit(1); }
                 iterationResults = readResults(fs, iterationPath);
                 double[][] next = centroidsFromResults(iterationResults, k, centroids);
                 reinitializeEmptyClusters(iterationResults, next, records, means, deviations);

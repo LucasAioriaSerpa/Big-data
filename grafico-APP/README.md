@@ -42,6 +42,11 @@ cotovelo é uma interpretação visual, não uma decisão automática do sistema
 Valores `indefinida` são representados como `null` pela API e aparecem como
 lacunas no gráfico.
 
+O dashboard oferece Ks de 2 a 10 e disponibiliza o relatório Markdown pelo
+botão **Baixar relatório Markdown**. O relatório identifica o melhor K pelo
+maior Silhouette, lista os clusters correspondentes e inclui a matriz de
+correlação numérica de cada cluster.
+
 ## Testes
 
 ```bash

@@ -1,7 +1,7 @@
 function split_pair(token, output, position,    count, pieces, i) {
     count = split(token, pieces, "=")
     if (count == 1) {
-        output["name"] = correlation_names[position]
+        output["name"] = "indefinida"
         output["value"] = token
     } else {
         output["value"] = pieces[count]
@@ -53,7 +53,7 @@ function print_centroid(title, values,    count, parts, i) {
         next
     }
     print_centroid("Centróide normalizado:", $4)
-    print_pairs("Correlações (temperatura x variável):", $5, ";")
+    print_pairs("Matriz de correlações (variáveis numéricas):", $5, ";")
 }
 
 BEGIN {
@@ -67,34 +67,5 @@ BEGIN {
     centroid_names[8] = "RH"
     centroid_names[9] = "wind"
     centroid_names[10] = "rain"
-
-    correlation_names[1] = "X"
-    correlation_names[2] = "Y"
-    correlation_names[3] = "FFMC"
-    correlation_names[4] = "DMC"
-    correlation_names[5] = "DC"
-    correlation_names[6] = "ISI"
-    correlation_names[7] = "RH"
-    correlation_names[8] = "wind"
-    correlation_names[9] = "rain"
-    correlation_names[10] = "area"
-    correlation_names[11] = "month=jan"
-    correlation_names[12] = "month=feb"
-    correlation_names[13] = "month=mar"
-    correlation_names[14] = "month=apr"
-    correlation_names[15] = "month=may"
-    correlation_names[16] = "month=jun"
-    correlation_names[17] = "month=jul"
-    correlation_names[18] = "month=aug"
-    correlation_names[19] = "month=sep"
-    correlation_names[20] = "month=oct"
-    correlation_names[21] = "month=nov"
-    correlation_names[22] = "month=dec"
-    correlation_names[23] = "day=mon"
-    correlation_names[24] = "day=tue"
-    correlation_names[25] = "day=wed"
-    correlation_names[26] = "day=thu"
-    correlation_names[27] = "day=fri"
-    correlation_names[28] = "day=sat"
-    correlation_names[29] = "day=sun"
+    centroid_names[11] = "area"
 }

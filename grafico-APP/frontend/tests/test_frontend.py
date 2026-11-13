@@ -11,11 +11,22 @@ def test_dashboard_is_rendered() -> None:
     assert b"Curva do cotovelo" in response.data
     assert b"Silhueta por K" in response.data
     assert b"correlation-chart" in response.data
+    assert b"K = 2" in response.data
+    assert b"K = 10" in response.data
+    assert b"K = 20" not in response.data
 
 
 def test_proxy_rejects_invalid_k() -> None:
     client = create_app(FrontendSettings("http://backend")).test_client()
 
     response = client.get("/api/results?k=1")
+
+    assert response.status_code == 400
+
+
+def test_proxy_rejects_k_above_supported_range() -> None:
+    client = create_app(FrontendSettings("http://backend")).test_client()
+
+    response = client.get("/api/results?k=11")
 
     assert response.status_code == 400

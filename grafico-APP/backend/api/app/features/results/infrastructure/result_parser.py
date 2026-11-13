@@ -6,31 +6,10 @@ from app.features.results.domain.models import (
     CorrelationValue,
 )
 
-# Clustering dimensions (area is excluded; temp is included).
-CENTROID_NAMES = ("X", "Y", "FFMC", "DMC", "DC", "ISI", "temp", "RH", "wind", "rain")
-# Variables correlated with temperature (temp itself is not listed; area is).
-CORRELATION_NUMERIC_NAMES = ("X", "Y", "FFMC", "DMC", "DC", "ISI", "RH", "wind", "rain", "area")
-CORRELATION_NAMES = (
-    *CORRELATION_NUMERIC_NAMES,
-    "month=jan",
-    "month=feb",
-    "month=mar",
-    "month=apr",
-    "month=may",
-    "month=jun",
-    "month=jul",
-    "month=aug",
-    "month=sep",
-    "month=oct",
-    "month=nov",
-    "month=dec",
-    "day=mon",
-    "day=tue",
-    "day=wed",
-    "day=thu",
-    "day=fri",
-    "day=sat",
-    "day=sun",
+NUMERIC_NAMES = ("X", "Y", "FFMC", "DMC", "DC", "ISI", "temp", "RH", "wind", "rain", "area")
+CENTROID_NAMES = NUMERIC_NAMES
+CORRELATION_NAMES = tuple(
+    f"{row}~{column}" for row in NUMERIC_NAMES for column in NUMERIC_NAMES
 )
 
 

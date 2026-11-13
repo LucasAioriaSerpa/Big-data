@@ -19,11 +19,11 @@ def proxy_results():
     raw_k = request.args.get("k")
     try:
         k = int(raw_k) if raw_k else None
-        if k is not None and k < 2:
+        if k is not None and not 2 <= k <= 10:
             raise ValueError
         return jsonify(_client().get_results(k=k))
     except ValueError as exc:
-        return jsonify({"error": "O parâmetro k deve ser um inteiro maior ou igual a 2."}), 400
+        return jsonify({"error": "O parâmetro k deve ser um inteiro entre 2 e 10."}), 400
     except BackendApiError as exc:
         return jsonify({"error": str(exc)}), 503
 
@@ -40,5 +40,17 @@ def proxy_elbow():
 def proxy_silhouette():
     try:
         return jsonify(_client().get_silhouette())
+    except BackendApiError as exc:
+        return jsonify({"error": str(exc)}), 503
+
+
+@results_blueprint.get("/api/report")
+def proxy_report():
+    try:
+        return current_app.response_class(
+            _client().get_report_markdown(),
+            mimetype="text/markdown",
+            headers={"Content-Disposition": "attachment; filename=relatorio-forest-fire.md"},
+        )
     except BackendApiError as exc:
         return jsonify({"error": str(exc)}), 503

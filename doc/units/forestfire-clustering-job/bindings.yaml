@@ -16,7 +16,7 @@ runtime_config:
   - key: "forestfire.k"
     source_loc: "temperatura-media/src/main/java/org/forestFire/Main.java:91"
     source: code
-    default_value: "2..4"
+    default_value: "2..10"
     must_appear_in_target: true
     notes: "Número de clusters da execução."
   - key: "forestfire.centroids"

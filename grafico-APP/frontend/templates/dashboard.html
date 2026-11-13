@@ -19,11 +19,12 @@
       <label for="k-select">Configuração K</label>
       <select id="k-select">
         <option value="">Todas</option>
-        <option value="2">K = 2</option>
-        <option value="3">K = 3</option>
-        <option value="4">K = 4</option>
+        {% for k in range(2, 11) %}
+        <option value="{{ k }}">K = {{ k }}</option>
+        {% endfor %}
       </select>
       <button id="load-button" type="button">Atualizar</button>
+      <a class="button" href="/api/report">Baixar relatório Markdown</a>
     </section>
 
     <p id="status" role="status"></p>

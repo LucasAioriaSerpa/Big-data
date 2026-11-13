@@ -30,7 +30,7 @@ public final class ClusterMapper extends Mapper<LongWritable, Text, Text, Text> 
             double[] point = record.clusterFeatures();
             int cluster = closest(point);
             context.write(new Text(Integer.toString(cluster)),
-                    new Text(serialize(record, point, selectedDistance)));
+                    new Text(serialize(point, selectedDistance)));
         } catch (IllegalArgumentException e) {
             context.getCounter("CSV", "REGISTROS_INVALIDOS").increment(1);
         }
@@ -55,9 +55,8 @@ public final class ClusterMapper extends Mapper<LongWritable, Text, Text, Text> 
         return selected;
     }
 
-    // Value format: distance|clusterFeatures(10, raw, includes temp)|correlationFeatures(29, no temp).
-    // The two vectors have different layouts, so the reducer must read each one separately.
-    private String serialize(FireRecord record, double[] clusterFeatures, double distance) {
+    // Value format: distance|clusterFeatures(11, raw numeric values).
+    private String serialize(double[] clusterFeatures, double distance) {
         StringBuilder result = new StringBuilder();
         result.append(distance).append('|');
         for (int i = 0; i < clusterFeatures.length; i++) {
@@ -65,13 +64,6 @@ public final class ClusterMapper extends Mapper<LongWritable, Text, Text, Text> 
                 result.append(',');
             }
             result.append(clusterFeatures[i]);
-        }
-        result.append('|');
-        for (int i = 0; i < FireRecord.CORRELATION_FEATURE_COUNT; i++) {
-            if (i > 0) {
-                result.append(',');
-            }
-            result.append(record.correlationValue(i));
         }
         return result.toString();
     }

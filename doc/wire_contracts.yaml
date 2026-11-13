@@ -28,12 +28,12 @@ contracts:
       method: "CLI"
       path: "<input> <output>"
       request: "CSV Forest Fires com 13 colunas"
-      response: "part-r-00000 com uma linha por cluster e k entre 2 e 4"
+      response: "part-r-00000 com uma linha por cluster para cada k entre 2 e 10"
       error: "argumentos inválidos encerram com código 2; entrada sem registros válidos lança IllegalArgumentException; job falho encerra com código 1"
       auth: "não aplicável"
     target_contract:
       method: "org.forestFire.Main.main(String[] args)"
-      notes: "Preservar validação CSV, k=2..4, saída tabular e mensagens de indefinição."
+      notes: "Preservar validação CSV, k=2..10, saída tabular e mensagens de indefinição."
     semantic_divergence:
       - field: "area"
         issue: "area participa das correlações, mas não participa das dimensões de clustering"
