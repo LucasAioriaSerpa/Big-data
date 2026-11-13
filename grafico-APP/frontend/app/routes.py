@@ -34,3 +34,11 @@ def proxy_elbow():
         return jsonify(_client().get_elbow())
     except BackendApiError as exc:
         return jsonify({"error": str(exc)}), 503
+
+
+@results_blueprint.get("/api/silhouette")
+def proxy_silhouette():
+    try:
+        return jsonify(_client().get_silhouette())
+    except BackendApiError as exc:
+        return jsonify({"error": str(exc)}), 503

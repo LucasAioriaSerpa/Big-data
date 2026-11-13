@@ -65,9 +65,9 @@ class ResultParser:
 
     def parse_line(self, line: str, line_number: int = 1) -> ClusterResult:
         fields = line.split("\t")
-        if len(fields) not in (5, 6):
+        if len(fields) not in (5, 6, 7):
             raise ResultFormatError(
-                f"Linha {line_number}: esperados 5 ou 6 campos tabulados, encontrados {len(fields)}"
+                f"Linha {line_number}: esperados 5, 6 ou 7 campos tabulados, encontrados {len(fields)}"
             )
 
         try:
@@ -78,13 +78,16 @@ class ResultParser:
                 raise ValueError("cluster e registros devem ser não negativos")
             centroid = self._parse_centroid(fields[3], line_number)
             correlations = self._parse_correlations(fields[4], line_number)
-            inertia = float(fields[5]) if len(fields) == 6 else 0.0
+            inertia = float(fields[5]) if len(fields) >= 6 else 0.0
+            silhouette = float(fields[6]) if len(fields) == 7 else 0.0
             if inertia < 0:
                 raise ValueError("inércia deve ser não negativa")
+            if not -1.0 <= silhouette <= 1.0:
+                raise ValueError("silhouette deve estar entre -1 e 1")
         except ValueError as exc:
             raise ResultFormatError(f"Linha {line_number}: {exc}") from exc
 
-        return ClusterResult(k, cluster, records, centroid, correlations, inertia)
+        return ClusterResult(k, cluster, records, centroid, correlations, inertia, silhouette)
 
     @staticmethod
     def _parse_k(value: str, line_number: int) -> int:

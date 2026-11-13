@@ -26,3 +26,14 @@ class ResultService:
         for result in results:
             grouped[result.k] = grouped.get(result.k, 0.0) + result.inertia
         return tuple(sorted(grouped.items()))
+
+    def silhouette(self) -> tuple[tuple[int, float], ...]:
+        results = self._parser.parse_file(self._result_file)
+        grouped: dict[int, list[float]] = {}
+        for result in results:
+            grouped.setdefault(result.k, []).append(result.silhouette)
+        return tuple(
+            (k, sum(scores) / len(scores))
+            for k, scores in sorted(grouped.items())
+            if scores
+        )

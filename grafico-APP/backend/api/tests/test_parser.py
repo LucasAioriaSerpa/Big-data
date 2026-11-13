@@ -46,5 +46,5 @@ def test_parser_rejects_missing_file(tmp_path: Path) -> None:
 
 
 def test_parser_rejects_wrong_field_count() -> None:
-    with pytest.raises(ResultFormatError, match="5 ou 6 campos"):
+    with pytest.raises(ResultFormatError, match="5, 6 ou 7 campos"):
         ResultParser().parse_line("k=2\t0\t1")

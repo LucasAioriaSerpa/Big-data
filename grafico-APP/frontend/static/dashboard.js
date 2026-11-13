@@ -1,5 +1,6 @@
 let correlationChart;
 let elbowChart;
+let silhouetteChart;
 
 function setStatus(message, isError = false) {
   const status = document.querySelector("#status");
@@ -48,6 +49,30 @@ function renderElbow(points) {
   });
 }
 
+function renderSilhouette(points) {
+  if (silhouetteChart) silhouetteChart.destroy();
+  silhouetteChart = new Chart(document.querySelector("#silhouette-chart"), {
+    type: "line",
+    data: {
+      labels: points.map((point) => `K=${point.k}`),
+      datasets: [{
+        label: "Coeficiente de silhueta",
+        data: points.map((point) => point.score),
+        borderColor: "#63d6a0",
+        backgroundColor: "#63d6a0",
+        pointRadius: 6,
+        tension: 0.2,
+      }],
+    },
+    options: {
+      ...chartOptions("Silhueta"),
+      scales: { ...chartOptions("Silhueta").scales, y: {
+        ...chartOptions("Silhueta").scales.y, min: -1, max: 1,
+      } },
+    },
+  });
+}
+
 function renderCorrelations(results) {
   const labels = results.flatMap((item) => item.correlations.map((entry) => entry.name));
   const uniqueLabels = [...new Set(labels)];
@@ -77,17 +102,22 @@ async function loadResults() {
   const resultsUrl = k ? `/api/results?k=${encodeURIComponent(k)}` : "/api/results";
   setStatus("Carregando resultados...");
   try {
-    const [resultsResponse, elbowResponse] = await Promise.all([
+    const [resultsResponse, elbowResponse, silhouetteResponse] = await Promise.all([
       fetch(resultsUrl),
       fetch("/api/elbow"),
+      fetch("/api/silhouette"),
     ]);
     const results = await resultsResponse.json();
     const elbow = await elbowResponse.json();
-    if (!resultsResponse.ok || !elbowResponse.ok) {
-      throw new Error(results.error || elbow.error || "Falha ao carregar resultados.");
+    const silhouette = await silhouetteResponse.json();
+    if (!resultsResponse.ok || !elbowResponse.ok || !silhouetteResponse.ok) {
+      throw new Error(
+        results.error || elbow.error || silhouette.error || "Falha ao carregar resultados.",
+      );
     }
     renderCards(results);
     renderElbow(elbow);
+    renderSilhouette(silhouette);
     renderCorrelations(results);
     setStatus(`${results.length} clusters carregados.`);
   } catch (error) {

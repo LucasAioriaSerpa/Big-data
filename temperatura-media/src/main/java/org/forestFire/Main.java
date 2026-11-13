@@ -40,7 +40,11 @@ public class Main {
         double[] deviations = deviations(records, means);
         List<String> finalResults = new ArrayList<>();
 
-        for (int k = 2; k <= 4; k++) {
+        Random randK = new Random();
+        int maxK = 20;
+        int minK = 4;
+
+        for (int k = 2; k <= (randK.nextInt(maxK - minK + 1) + minK); k++) {
             double[][] centroids = initializeKMeansPlusPlus(records, means, deviations, k);
             List<String> iterationResults = new ArrayList<>();
             for (int iteration = 0; iteration < 50; iteration++) {
@@ -59,16 +63,18 @@ public class Main {
                 }
                 centroids = next;
             }
+            double silhouette = silhouette(records, centroids, means, deviations);
             boolean[] present = new boolean[k];
             for (String result : iterationResults) {
-                finalResults.add("k=" + k + "\t" + result);
+                finalResults.add("k=" + k + "\t" + result + "\t" + silhouette);
                 present[Integer.parseInt(result.split("\t", -1)[0])] = true;
             }
             for (int cluster = 0; cluster < k; cluster++) {
                 if (!present[cluster]) {
                     finalResults.add("k=" + k + "\t" + cluster + "\t0\t"
                             + serializeVector(centroids[cluster]) + "\t"
-                            + emptyCorrelations() + "\t0.0");
+                            + emptyCorrelations() + "\t0.0\t"
+                            + silhouette);
                 }
             }
         }
@@ -270,6 +276,68 @@ public class Main {
             result[i] = (values[i] - means[i]) / deviations[i];
         }
         return result;
+    }
+
+    private static double silhouette(List<FireRecord> records, double[][] centroids,
+                                     double[] means, double[] deviations) {
+        int[] assignments = new int[records.size()];
+        double[][] points = new double[records.size()][];
+        int[] clusterSizes = new int[centroids.length];
+        for (int i = 0; i < records.size(); i++) {
+            points[i] = normalizedPoint(records.get(i), means, deviations);
+            assignments[i] = closestCluster(points[i], centroids);
+            clusterSizes[assignments[i]]++;
+        }
+
+        double total = 0.0;
+        for (int i = 0; i < points.length; i++) {
+            int ownCluster = assignments[i];
+            if (clusterSizes[ownCluster] < 2) continue;
+            double ownDistance = 0.0;
+            for (int j = 0; j < points.length; j++) {
+                if (assignments[j] == ownCluster && i != j) {
+                    ownDistance += euclideanDistance(points[i], points[j]);
+                }
+            }
+            double a = ownDistance / (clusterSizes[ownCluster] - 1);
+            double b = Double.POSITIVE_INFINITY;
+            for (int cluster = 0; cluster < centroids.length; cluster++) {
+                if (cluster == ownCluster || clusterSizes[cluster] == 0) continue;
+                double otherDistance = 0.0;
+                for (int j = 0; j < points.length; j++) {
+                    if (assignments[j] == cluster) {
+                        otherDistance += euclideanDistance(points[i], points[j]);
+                    }
+                }
+                b = Math.min(b, otherDistance / clusterSizes[cluster]);
+            }
+            if (Double.isFinite(b) && Math.max(a, b) > 0.0) {
+                total += (b - a) / Math.max(a, b);
+            }
+        }
+        return total / records.size();
+    }
+
+    private static int closestCluster(double[] point, double[][] centroids) {
+        int selected = 0;
+        double best = Double.POSITIVE_INFINITY;
+        for (int cluster = 0; cluster < centroids.length; cluster++) {
+            double distance = euclideanDistance(point, centroids[cluster]);
+            if (distance < best) {
+                best = distance;
+                selected = cluster;
+            }
+        }
+        return selected;
+    }
+
+    private static double euclideanDistance(double[] left, double[] right) {
+        double sum = 0.0;
+        for (int i = 0; i < left.length; i++) {
+            double delta = left[i] - right[i];
+            sum += delta * delta;
+        }
+        return Math.sqrt(sum);
     }
 
     private static String emptyCorrelations() {

@@ -41,3 +41,17 @@ class ResultsApiClient:
         if not isinstance(payload, list):
             raise BackendApiError("Resposta inválida recebida para a curva do cotovelo.")
         return payload
+
+    def get_silhouette(self) -> list[dict[str, Any]]:
+        try:
+            response = requests.get(
+                f"{self._base_url}/api/v1/silhouette",
+                timeout=self._timeout_seconds,
+            )
+            response.raise_for_status()
+            payload = response.json()
+        except (requests.RequestException, ValueError) as exc:
+            raise BackendApiError("Não foi possível obter o gráfico de silhueta.") from exc
+        if not isinstance(payload, list):
+            raise BackendApiError("Resposta inválida recebida para o gráfico de silhueta.")
+        return payload

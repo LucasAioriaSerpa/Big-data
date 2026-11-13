@@ -15,6 +15,7 @@ class ClusterResultResponse(BaseModel):
     centroid: list[NamedValueResponse]
     correlations: list[NamedValueResponse]
     inertia: float
+    silhouette: float
 
     @classmethod
     def from_domain(cls, result: ClusterResult) -> "ClusterResultResponse":
@@ -28,9 +29,15 @@ class ClusterResultResponse(BaseModel):
                 for item in result.correlations
             ],
             inertia=result.inertia,
+            silhouette=result.silhouette,
         )
 
 
 class ElbowPointResponse(BaseModel):
     k: int
     inertia: float
+
+
+class SilhouettePointResponse(BaseModel):
+    k: int
+    score: float

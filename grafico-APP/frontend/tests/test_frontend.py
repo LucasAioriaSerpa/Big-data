@@ -9,6 +9,7 @@ def test_dashboard_is_rendered() -> None:
 
     assert response.status_code == 200
     assert b"Curva do cotovelo" in response.data
+    assert b"Silhueta por K" in response.data
     assert b"correlation-chart" in response.data
 
 

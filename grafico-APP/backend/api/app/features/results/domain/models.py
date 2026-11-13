@@ -21,3 +21,4 @@ class ClusterResult:
     centroid: tuple[CentroidValue, ...]
     correlations: tuple[CorrelationValue, ...]
     inertia: float
+    silhouette: float

@@ -5,6 +5,7 @@ from app.features.results.infrastructure.result_parser import ResultSourceError
 from app.features.results.presentation.schemas import (
     ClusterResultResponse,
     ElbowPointResponse,
+    SilhouettePointResponse,
 )
 from app.features.results.services.result_service import ResultService
 
@@ -44,6 +45,15 @@ def elbow() -> list[ElbowPointResponse]:
     except ResultSourceError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     return [ElbowPointResponse(k=k, inertia=inertia) for k, inertia in points]
+
+
+@router.get("/api/v1/silhouette", response_model=list[SilhouettePointResponse])
+def silhouette() -> list[SilhouettePointResponse]:
+    try:
+        points = _service().silhouette()
+    except ResultSourceError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    return [SilhouettePointResponse(k=k, score=score) for k, score in points]
 
 
 @router.get("/api/v1/results/{k}/{cluster}", response_model=ClusterResultResponse)
